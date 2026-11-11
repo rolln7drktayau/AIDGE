@@ -1,0 +1,6 @@
+node_modules/
+dist/
+references/
+.vite/
+playwright-report/
+test-results/
