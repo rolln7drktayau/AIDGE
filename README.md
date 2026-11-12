@@ -1,6 +1,6 @@
 # AIDGE Hardware Lab
 
-An English-language browser workbench for exploring AIDGE Challenge hardware, visualizing an illustrative 3D board, exercising a synthetic camera-to-count pipeline, and reviewing live planning estimates. The primary profile is the ASYGN Smart Video Sensor / ColibryNPU track. Wildlife Monitoring (Alif Ensemble E7) and Aidge in Space (CPU/FPGA concept) are also represented as separate hardware profiles.
+An English/French browser workbench for exploring AIDGE Challenge hardware, visualizing an illustrative 3D board, exercising a synthetic camera-to-count pipeline, and reviewing live planning estimates. The primary profile is the ASYGN Smart Video Sensor / ColibryNPU track. Wildlife Monitoring (Alif Ensemble E7) and Aidge in Space (CPU/FPGA concept) are also represented as separate hardware profiles. Use the EN/FR toggle in the header.
 
 ## Start the simulator
 
@@ -21,7 +21,9 @@ npm run build
 npm run preview
 ```
 
-The 3D board is schematic and interactive: drag to orbit, scroll to zoom, click a component, or select its component chip. The primary synthetic grayscale scene animates people-like silhouettes, bounding boxes, track IDs and line crossings. The other two profiles show generic compute-flow animations and do not pretend to detect wildlife or reproduce a space mission. Controls change the workload estimates in real time. The virtual 20-second test and JSON report provide reproducible planning outputs.
+The 3D board is an illustrative, explodable model: drag to orbit, scroll to zoom, click a component, or open the immersive full-window viewer for top/bottom views, component separation and the manufacturer reference image. Placement follows the annotated ASYGN product views, not a CAD assembly. No public dimensioned drawing or mechanical CAD was found, so the model is not millimetre-accurate. The primary synthetic grayscale scene animates people-like silhouettes, bounding boxes, track IDs and line crossings. The other two profiles show generic compute-flow animations and do not pretend to detect wildlife or reproduce a space mission. Controls change the workload estimates in real time. The virtual 20-second test and JSON report provide reproducible planning outputs.
+
+See [`TUTORIAL.md`](TUTORIAL.md) for the English/French user guide, 3D controls, virtual test steps and USB/BLE telemetry setup. The hardware panel can read real measurements only after a firmware/host bridge emits newline-delimited JSON; it does not auto-detect inference results or program the board.
 
 ## Important: simulation versus target hardware
 
