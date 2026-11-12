@@ -48,8 +48,15 @@ export function parseTelemetryLine(line) {
   if (!line || typeof line !== 'string') return null;
   try {
     const data = JSON.parse(line.trim());
-    const numeric = ['fps', 'power_mw', 'latency_ms', 'accuracy', 'memory_kb', 'count'];
-    if (!numeric.some((key) => typeof data[key] === 'number' && Number.isFinite(data[key]))) return null;
+    const limits = { fps: [0, 100000], power_mw: [0, 100000], latency_ms: [0, 1e9], accuracy: [0, 1], memory_kb: [0, 1e9], count: [0, Number.MAX_SAFE_INTEGER] };
+    const present = Object.keys(limits).filter((key) => Object.hasOwn(data, key));
+    if (!present.length) return null;
+    for (const key of present) {
+      const value = data[key];
+      const [min, max] = limits[key];
+      if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) return null;
+      if (key === 'count' && !Number.isInteger(value)) return null;
+    }
     return {
       fps: finite(data.fps),
       powerMw: finite(data.power_mw),

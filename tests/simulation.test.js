@@ -38,3 +38,12 @@ test('hardware telemetry parser accepts JSON samples and rejects log noise', () 
   assert.equal(parseTelemetryLine('{"fps":null}'), null);
   assert.equal(parseTelemetryLine('{bad json'), null);
 });
+
+test('partial telemetry stays partial and rejects out-of-range values', () => {
+  const sample = parseTelemetryLine('{"fps":12.5}');
+  assert.equal(sample.fps, 12.5);
+  assert.equal(sample.powerMw, null);
+  assert.equal(parseTelemetryLine('{"accuracy":1.4}'), null);
+  assert.equal(parseTelemetryLine('{"power_mw":-2}'), null);
+  assert.equal(parseTelemetryLine('{"count":2.5}'), null);
+});

@@ -3,18 +3,18 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // Dimensions are normalized scene units. ASYGN does not publish the board's
 // mechanical CAD/dimensions publicly; do not interpret these as millimetres.
-const C = { pcb: 0x102c36, mask: 0x123944, trace: 0x24906e, copper: 0xc59a55, gold: 0xd5b56f, dark: 0x121a1d, chip: 0x151c20, silk: 0xb6d0c6, mint: 0x5af0b0 };
+const C = { pcb: 0x14251b, mask: 0x1b3425, trace: 0x6b8152, copper: 0xa77b42, gold: 0xc39a5c, dark: 0x101416, chip: 0x17191b, silk: 0xc8c9be, mint: 0x74d6a4 };
 
 export function createBoardScene(canvas, onComponent) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#071014');
-  scene.fog = new THREE.Fog('#071014', 13, 34);
+  scene.background = new THREE.Color('#0b1011');
+  scene.fog = new THREE.Fog('#0b1011', 22, 48);
   const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 80);
   camera.position.set(6.3, 5.8, 7.4);
 
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' }); }
-  catch { return { setTrack() {}, setActivity() {}, setExplode() {}, setSide() {}, setProbeVisible() {}, dispose() {} }; }
+  catch { return { setTrack() {}, setActivity() {}, setExplode() {}, setSide() {}, setProbeVisible() {}, setPartDetached() { return false; }, isPartDetached() { return false; }, setSelectedPart() {}, dispose() {} }; }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -31,16 +31,20 @@ export function createBoardScene(canvas, onComponent) {
   controls.maxPolarAngle = Math.PI * 0.48;
   controls.minPolarAngle = 0.08;
 
-  scene.add(new THREE.HemisphereLight(0xb8f7e5, 0x101923, 2.2));
-  const key = new THREE.DirectionalLight(0xe1fff4, 3.3); key.position.set(5, 9, 5); key.castShadow = true; scene.add(key);
-  const fill = new THREE.DirectionalLight(0x38bca2, 1.5); fill.position.set(-6, 3, -5); scene.add(fill);
-  const rim = new THREE.PointLight(0x46e0c2, 35, 18); rim.position.set(1, 5, -5); scene.add(rim);
-  const grid = new THREE.GridHelper(32, 64, 0x285049, 0x122a2b); grid.position.y = -1.25; scene.add(grid);
+  scene.add(new THREE.HemisphereLight(0xd5e2d8, 0x151b18, 1.65));
+  const key = new THREE.DirectionalLight(0xfff4dc, 2.1); key.position.set(5, 9, 5); key.castShadow = true; scene.add(key);
+  const fill = new THREE.DirectionalLight(0xc0d4c7, 0.75); fill.position.set(-6, 3, -5); scene.add(fill);
+  const rim = new THREE.PointLight(0x9bceb1, 12, 22); rim.position.set(1, 5, -5); scene.add(rim);
+  const grid = new THREE.GridHelper(32, 64, 0x445049, 0x28332d); grid.position.y = -1.25; grid.material.transparent = true; grid.material.opacity = 0.16; scene.add(grid);
 
   const board = new THREE.Group(); scene.add(board);
   const staticParts = new THREE.Group(); board.add(staticParts);
   const interactive = [];
   const explodable = [];
+  const componentGroups = new Map();
+  const selectionHelper = new THREE.Box3Helper(new THREE.Box3(), 0x75f2b2);
+  selectionHelper.visible = false;
+  scene.add(selectionHelper);
   const leds = [];
   let active = false;
   let explosion = 0;
@@ -64,10 +68,25 @@ export function createBoardScene(canvas, onComponent) {
   }
 
   function roundedBoard(name, parent = staticParts, color = pcb, width = 4.25, depth = 4.25) {
-    const mesh = box(parent, name, [width, 0.15, depth], [0, 0, 0], color, true);
+    const radius = Math.min(0.2, width * 0.055, depth * 0.055);
+    const shape = new THREE.Shape();
+    shape.moveTo(-width / 2 + radius, -depth / 2);
+    shape.lineTo(width / 2 - radius, -depth / 2); shape.quadraticCurveTo(width / 2, -depth / 2, width / 2, -depth / 2 + radius);
+    shape.lineTo(width / 2, depth / 2 - radius); shape.quadraticCurveTo(width / 2, depth / 2, width / 2 - radius, depth / 2);
+    shape.lineTo(-width / 2 + radius, depth / 2); shape.quadraticCurveTo(-width / 2, depth / 2, -width / 2, depth / 2 - radius);
+    shape.lineTo(-width / 2, -depth / 2 + radius); shape.quadraticCurveTo(-width / 2, -depth / 2, -width / 2 + radius, -depth / 2);
+    const holeRadius = Math.min(width, depth) * 0.025;
+    const holeOffsetX = width * 0.44; const holeOffsetZ = depth * 0.44;
+    for (const [x, z] of [[-holeOffsetX,-holeOffsetZ],[holeOffsetX,-holeOffsetZ],[-holeOffsetX,holeOffsetZ],[holeOffsetX,holeOffsetZ]]) {
+      const hole = new THREE.Path(); hole.absarc(x, z, holeRadius, 0, Math.PI * 2, true); shape.holes.push(hole);
+    }
+    const geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.018, bevelThickness: 0.018, curveSegments: 8 });
+    const mesh = new THREE.Mesh(geometry, color);
+    mesh.name = name; mesh.userData.partName = name; mesh.rotation.x = -Math.PI / 2; mesh.position.y = -0.06;
+    mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); interactive.push(mesh);
     mesh.userData.partName = name;
-    // Mounting holes are represented by dark annuli at the four board corners.
-    for (const [x, z] of [[-1.92, -1.92], [1.92, -1.92], [-1.92, 1.92], [1.92, 1.92]]) {
+    // Plated mounting rings sit on the top solder mask around drilled holes.
+    for (const [x, z] of [[-holeOffsetX, -holeOffsetZ], [holeOffsetX, -holeOffsetZ], [-holeOffsetX, holeOffsetZ], [holeOffsetX, holeOffsetZ]]) {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.025, 8, 24), gold);
       ring.rotation.x = Math.PI / 2; ring.position.set(x, 0.083, z); parent.add(ring);
       const hole = new THREE.Mesh(new THREE.CircleGeometry(0.078, 20), mat(0x080f12, 0.8, 0.05));
@@ -82,7 +101,7 @@ export function createBoardScene(canvas, onComponent) {
     ctx.clearRect(0, 0, width, height);
     ctx.font = '600 27px ui-monospace, Consolas, monospace';
     ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.shadowColor = '#5cf4bf'; ctx.shadowBlur = 5;
+    ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 1.5;
     ctx.fillText(text.toUpperCase().slice(0, 25), width / 2, height / 2);
     const texture = new THREE.CanvasTexture(c); texture.colorSpace = THREE.SRGBColorSpace;
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
@@ -112,13 +131,17 @@ export function createBoardScene(canvas, onComponent) {
 
   function partGroup(name, x, z, sideName = 'top') {
     const group = new THREE.Group(); group.name = name; group.userData.partName = name;
-    const y = sideName === 'top' ? 0.16 : -0.16;
+    group.userData.componentGroup = true;
+    const y = sideName === 'top' ? 0.06 : -0.06;
     group.position.set(x, y, z); board.add(group);
     const distance = Math.hypot(x, z);
     group.userData.base = group.position.clone();
     group.userData.side = sideName;
+    group.userData.detached = 0;
     const radial = new THREE.Vector3(x || 0.1, 0, z || 0.1).normalize();
     group.userData.explode = new THREE.Vector3(radial.x * (0.17 + distance * 0.07), sideName === 'top' ? 0.54 + distance * 0.08 : -0.54 - distance * 0.08, radial.z * (0.17 + distance * 0.07));
+    group.userData.detachDirection = new THREE.Vector3(radial.x * 0.32, sideName === 'top' ? 1 : -1, radial.z * 0.32).normalize();
+    componentGroups.set(name, group);
     explodable.push(group);
     return group;
   }
@@ -183,7 +206,7 @@ export function createBoardScene(canvas, onComponent) {
   }
 
   function addCameraModule() {
-    const group = partGroup('QVA camera module / FPC flex', -2.75, 0.15, 'top');
+    const group = partGroup('QVA camera module / FPC flex', -1.42, -0.42, 'top');
     box(group, 'QVA image sensor module', [0.72, 0.12, 0.62], [0, 0.1, 0], mat(0x1b2b2e, 0.32, 0.25), true);
     const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.21, 28), mat(0x283a43, 0.22, 0.52));
     barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.24, 0.04); group.add(barrel);
@@ -205,7 +228,7 @@ export function createBoardScene(canvas, onComponent) {
     const contact = box(holder, 'Battery spring contact', [0.28, 0.045, 0.14], [0, 0.16, 0], gold);
     contact.rotation.y = 0.22;
     const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.47, 0.12, 48), mat(0xbec4c1, 0.21, 0.8));
-    coin.position.y = 0.45; coin.userData.partName = 'CR927 coin-cell battery'; holder.add(coin); interactive.push(coin);
+    coin.position.y = 0.19; coin.userData.partName = 'CR927 coin-cell battery'; holder.add(coin); interactive.push(coin);
     holder.userData.partName = 'CR927 battery holder'; interactive.push(holder);
     return holder;
   }
@@ -219,6 +242,7 @@ export function createBoardScene(canvas, onComponent) {
 
   function addProbe() {
     const probe = new THREE.Group(); probe.name = 'ColibryProbe'; probe.userData.partName = 'ColibryProbe programming and debug adapter';
+    probe.userData.componentGroup = true;
     board.add(probe);
     const plate = box(probe, 'ColibryProbe PCB', [2.25, 0.14, 1.44], [3.35, -0.7, 0.05], mat(0x182a30, 0.48, 0.35), true);
     plate.userData.partName = 'ColibryProbe board';
@@ -231,6 +255,9 @@ export function createBoardScene(canvas, onComponent) {
     addSilkscreen('SWD · RESET · POWER', 3.33, 0.66, '#d2ddd5', probe);
     probe.userData.base = probe.position.clone();
     probe.userData.explode = new THREE.Vector3(1.0, -1.05, 0.15);
+    probe.userData.detachDirection = new THREE.Vector3(1, -0.4, 0.15).normalize();
+    probe.userData.detached = 0;
+    componentGroups.set(probe.name, probe);
     explodable.push(probe); interactive.push(probe);
     const cableCurve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(2.4, 0.07, 1.0), new THREE.Vector3(2.65, 0.25, 1.6), new THREE.Vector3(3.2, 0.25, 1.8), new THREE.Vector3(3.48, -0.53, 0.75),
@@ -241,14 +268,10 @@ export function createBoardScene(canvas, onComponent) {
   }
 
   let probeGroup = null;
-  let cameraModule = null;
-
   function buildColibry() {
-    roundedBoard('Colibry EvalBoardTiny rev1 · PCB', staticParts, pcb, 4.25, 4.25);
+    roundedBoard('Colibry EvalBoardTiny · illustrative PCB', staticParts, pcb, 4.25, 4.25);
     // Board edges, copper tracks, test pads and vias use the published exploded
     // top/bottom view to place the major subsystems. Fine layout is illustrative.
-    const edge = box(staticParts, 'PCB edge mask', [4.18, 0.024, 4.18], [0, 0.079, 0], mat(C.mask, 0.58, 0.2));
-    edge.material.transparent = true; edge.material.opacity = 0.22;
     addSilkscreen('ASYGN · COLIBRY', 0.12, 1.84);
     addSilkscreen('EVALBOARD TINY · REV 1', 0.1, 1.66, '#739e8d');
     addSilkscreen('TOP SIDE', -1.18, -1.82, '#648778');
@@ -270,10 +293,9 @@ export function createBoardScene(canvas, onComponent) {
     component({ name: '3-axis accelerometer', label: 'ACCELEROMETER', x: 0.72, z: -0.1, width: 0.3, depth: 0.28, height: 0.1, color: 0x253238, pins: 8 });
     component({ name: 'Battery connector', label: 'BATTERY', x: -1.64, z: 1.64, width: 0.42, depth: 0.32, height: 0.19, color: 0xe2dfd3, pins: 2 });
     addBattery();
-    component({ name: 'CPU / power-support IC', label: 'POWER / CPU', x: 0.86, z: 0.94, width: 0.38, depth: 0.34, height: 0.11, color: 0x202c30, pins: 16 });
     component({ name: 'External flash 8 Mbit', label: '8 Mbit FLASH', x: 0.45, z: 1.45, width: 0.28, depth: 0.2, height: 0.09, color: 0x20272b, pins: 8 });
     connector({ name: '2x GPIO / JTAG headers', x: 0.08, z: 1.98, rows: 1, columns: 8, pitch: 0.23, orientation: 'x' });
-    cameraModule = addCameraModule();
+    addCameraModule();
 
     // Back-side devices are mounted beneath the same PCB and become visible by
     // flipping the model or opening the manufacturer's annotated reference.
@@ -318,7 +340,9 @@ export function createBoardScene(canvas, onComponent) {
       });
       board.remove(child);
     }
-    staticParts.clear(); interactive.length = 0; explodable.length = 0; leds.length = 0;
+    staticParts.clear(); interactive.length = 0; explodable.length = 0; leds.length = 0; componentGroups.clear();
+    if (staticParts.parent !== board) board.add(staticParts);
+    selectionHelper.visible = false;
     currentTrack = track; explosion = 0;
     if (track === 'alif') buildAlif();
     else if (track === 'space') buildSpace();
@@ -333,11 +357,25 @@ export function createBoardScene(canvas, onComponent) {
     for (const part of explodable) {
       const base = part.userData.base || new THREE.Vector3();
       const offset = part.userData.explode || new THREE.Vector3();
-      part.position.copy(base).addScaledVector(offset, explosion);
+      const detach = part.userData.detachDirection || new THREE.Vector3();
+      part.position.copy(base).addScaledVector(offset, explosion).addScaledVector(detach, part.userData.detached || 0);
     }
   }
 
   function setExplode(value) { explosion = THREE.MathUtils.clamp(Number(value) || 0, 0, 1); applyExplosion(); }
+  function setPartDetached(name, detached) {
+    const part = componentGroups.get(name);
+    if (!part) return false;
+    part.userData.detachTarget = detached ? 1 : 0;
+    return true;
+  }
+  function isPartDetached(name) { return Boolean(componentGroups.get(name)?.userData.detachTarget); }
+  function setSelectedPart(name) {
+    const part = componentGroups.get(name);
+    if (!part) { selectionHelper.visible = false; return; }
+    selectionHelper.box.setFromObject(part);
+    selectionHelper.visible = true;
+  }
   function setSide(value) {
     side = value;
     if (currentTrack === 'colibry') board.rotation.x = side === 'bottom' ? Math.PI : 0;
@@ -363,7 +401,11 @@ export function createBoardScene(canvas, onComponent) {
     pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
     const hit = raycaster.intersectObjects(interactive, true)[0];
-    if (hit) onComponent?.(hit.object.userData.partName || hit.object.parent?.userData.partName || hit.object.name || 'Board component');
+    if (hit) {
+      let owner = hit.object;
+      while (owner.parent && !owner.userData.componentGroup) owner = owner.parent;
+      onComponent?.(hit.object.userData.partName || owner.userData.partName || hit.object.name || 'Board component', owner.name, Boolean(owner.userData.componentGroup));
+    }
   });
 
   function resize() {
@@ -374,6 +416,20 @@ export function createBoardScene(canvas, onComponent) {
   let tick = 0;
   function animate() {
     tick += 1; controls.update();
+    let partsMoving = false;
+    for (const part of componentGroups.values()) {
+      const current = part.userData.detached || 0;
+      const target = part.userData.detachTarget || 0;
+      if (Math.abs(current - target) > 0.002) {
+        part.userData.detached = THREE.MathUtils.damp(current, target, 5.5, 1 / 60);
+        partsMoving = true;
+      } else if (current !== target) part.userData.detached = target;
+    }
+    if (partsMoving) applyExplosion();
+    if (selectionHelper.visible) {
+      const selected = [...componentGroups.values()].find((part) => part.userData.selectedOutline);
+      if (selected) selectionHelper.box.setFromObject(selected);
+    }
     board.rotation.y = Math.sin(tick * 0.002) * 0.025;
     for (const led of leds) {
       led.material.emissiveIntensity = active ? 1 + Math.abs(Math.sin(tick * 0.13)) * 3 : 0.2;
@@ -382,5 +438,13 @@ export function createBoardScene(canvas, onComponent) {
     renderer.render(scene, camera); requestAnimationFrame(animate);
   }
   setTrack('colibry'); animate();
-  return { setTrack, setActivity(value) { active = Boolean(value); }, setExplode, setSide, setProbeVisible, resetView, dispose() { observer.disconnect(); controls.dispose(); renderer.dispose(); } };
+  let selectedPart = null;
+  function selectPart(name) {
+    if (selectedPart) selectedPart.userData.selectedOutline = false;
+    selectedPart = name ? componentGroups.get(name) || null : null;
+    if (selectedPart) selectedPart.userData.selectedOutline = true;
+    setSelectedPart(name);
+  }
+
+  return { setTrack, setActivity(value) { active = Boolean(value); }, setExplode, setSide, setProbeVisible, setPartDetached, isPartDetached, setSelectedPart: selectPart, resetView, dispose() { observer.disconnect(); controls.dispose(); selectionHelper.geometry.dispose(); selectionHelper.material.dispose(); renderer.dispose(); } };
 }

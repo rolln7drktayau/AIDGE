@@ -9,7 +9,8 @@ On Windows, double-click `Start_AIDGE_Lab.cmd`. Alternatively, run `npm install`
 ### Inspect the 3D hardware
 
 - Drag on the board to orbit; use the wheel or trackpad to zoom; click a component to read its description.
-- Select **Open Immersive 3D** for a full-window view. Switch between top, bottom and assembled views, move the explode slider, show/hide the separate ColibryProbe, and reset the camera.
+- Select **Open Immersive 3D** for a full-window view. Switch between top, bottom and assembled views, move the explode slider to separate the modeled assemblies progressively, show/hide the separate ColibryProbe, and reset the camera.
+- Select a modeled part by clicking it or choosing its item in the parts list. **Disconnect part** animates that virtual part away from its mounting position; **Reconnect part** returns it. This is visual disassembly only: it does not simulate a real connector, pin state, electrical circuit, damaged component or safe power-off sequence.
 - The manufacturer annotated image is shown beside the 3D and opens at full resolution. Its positions inform this illustrative model.
 - The geometry is approximate and normalized. ASYGN's public pages do not provide the mechanical CAD or dimensioned drawing needed for millimetre-accurate geometry.
 
@@ -27,7 +28,7 @@ Example record:
 {"fps":12.4,"power_mw":4.1,"latency_ms":62,"accuracy":0.96,"memory_kb":412,"count":3}
 ```
 
-Fields are optional. Accuracy is a fraction from 0 to 1. Supply actual target measurements; do not label simulator values as measured. Use a labelled validation dataset to measure accuracy and a calibrated power analyzer for board power. The UI reads telemetry; it does not flash the board, invoke the proprietary NNPA, or verify that reported readings are genuine.
+Fields are optional and are validated individually. Accuracy must be a fraction from 0 to 1; count must be a non-negative integer; the other numeric fields must be non-negative. Each metric card labels its own value as measured, estimated, or waiting, so an omitted field remains visibly estimated. Send accuracy as an aggregate over a labelled validation set, and send power from a calibrated analyzer; neither should be described as a per-frame inference measurement. The browser only receives access to the USB/BLE transport. When firmware or a host bridge sends valid records, those fields replace estimates. The virtual 20-second run does not trigger board inference; it opens a timed collection window for incoming readings. Build and flash an AIDGE application separately with ASYGN's toolchain and make it emit telemetry. The UI does not flash the board, invoke the proprietary NNPA, or verify that readings are genuine.
 
 ## Français
 
@@ -38,7 +39,8 @@ Sous Windows, double-cliquez sur `Start_AIDGE_Lab.cmd`. Sinon, lancez `npm insta
 ### Inspecter le matériel en 3D
 
 - Faites glisser la souris pour orbiter, utilisez la molette ou le pavé tactile pour zoomer, puis cliquez sur un composant pour lire sa description.
-- Choisissez **Ouvrir la 3D immersive** pour passer en plein écran. Basculez entre les faces supérieure, inférieure et assemblée, déplacez le curseur d’éclatement, affichez ou masquez la ColibryProbe séparée et réinitialisez la caméra.
+- Choisissez **Ouvrir la 3D immersive** pour passer en plein écran. Basculez entre les faces supérieure, inférieure et assemblée, déplacez progressivement le curseur d’éclatement, affichez ou masquez la ColibryProbe séparée et réinitialisez la caméra.
+- Sélectionnez une pièce en cliquant dessus ou depuis la liste. **Débrancher la pièce** l’éloigne visuellement de son emplacement ; **Rebrancher la pièce** la remet en place. Cette opération ne simule ni connecteur réel, ni état des broches, ni circuit électrique, ni procédure de mise hors tension sûre.
 - L’image annotée du fabricant apparaît à côté de la 3D et s’ouvre en pleine résolution. Elle sert de référence de placement pour ce modèle illustratif.
 - La géométrie est approximative et normalisée. Les pages publiques d’ASYGN ne fournissent pas la CAO mécanique ni le plan coté nécessaires à une précision au millimètre.
 
@@ -56,4 +58,4 @@ Exemple de mesure :
 {"fps":12.4,"power_mw":4.1,"latency_ms":62,"accuracy":0.96,"memory_kb":412,"count":3}
 ```
 
-Les champs sont facultatifs. La précision est une fraction entre 0 et 1. Transmettez des mesures de la cible réelle et ne présentez pas les valeurs du simulateur comme des mesures. Évaluez la précision sur un jeu annoté et mesurez la puissance avec un analyseur étalonné. L’interface lit la télémétrie ; elle ne programme pas la carte, n’exécute pas le NNPA propriétaire et ne vérifie pas l’authenticité des mesures reçues.
+Les champs sont facultatifs et validés séparément. La précision doit être une fraction de 0 à 1 ; le comptage un entier positif ou nul ; les autres nombres doivent être positifs ou nuls. Chaque indicateur précise s’il est mesuré, estimé ou en attente : un champ absent reste clairement une estimation. Envoyez la précision agrégée sur un jeu de validation annoté et la puissance mesurée par un analyseur étalonné ; ces deux valeurs ne sont pas des mesures par image. Le navigateur accède uniquement au transport USB/BLE. Quand le firmware ou un pont hôte transmet des lignes valides, les mesures remplacent les estimations correspondantes. Le test virtuel de 20 secondes ne déclenche pas d’inférence sur la carte ; il ouvre une fenêtre de collecte des mesures entrantes. Il faut construire et programmer séparément une application AIDGE avec les outils ASYGN et lui faire émettre cette télémétrie. L’interface ne programme pas la carte, n’exécute pas le NNPA propriétaire et ne vérifie pas l’authenticité des mesures reçues.
