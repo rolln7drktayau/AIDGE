@@ -289,6 +289,7 @@ $('#language-button').addEventListener('click', () => {
 $('#theme-button').addEventListener('click', () => {
   state.theme = state.theme === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = state.theme;
+  boardScene.setTheme(state.theme);
   try { localStorage.setItem('aidge-theme', state.theme); } catch {}
   translateUI();
 });
@@ -666,11 +667,12 @@ function spawnPerson(now) {
 function drawPerson(person, now) {
   const { x, y, h, w } = person;
   const head = h * 0.17;
-  ctx.fillStyle = '#5a625d';
+  const light = state.theme === 'light';
+  ctx.fillStyle = light ? '#59635d' : '#5a625d';
   ctx.beginPath();
   ctx.ellipse(x, y - h + head * 0.5, head * 0.47, head * 0.5, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#747d76';
+  ctx.fillStyle = light ? '#747e77' : '#747d76';
   ctx.beginPath();
   ctx.moveTo(x - w * 0.37, y - h + head);
   ctx.lineTo(x + w * 0.37, y - h + head);
@@ -684,33 +686,34 @@ function drawPerson(person, now) {
   ctx.lineTo(x - w * 0.56, y - h * 0.35);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = '#505853';
+  ctx.fillStyle = light ? '#465149' : '#505853';
   ctx.fillRect(x - w * 0.22, y - h * 0.12, w * 0.17, h * 0.12);
   ctx.fillRect(x + w * 0.05, y - h * 0.12, w * 0.17, h * 0.12);
   if (person.tracked) {
     const top = y - h - 5;
-    ctx.strokeStyle = '#69e7b1';
+    ctx.strokeStyle = light ? '#14834f' : '#69e7b1';
     ctx.lineWidth = 2;
     ctx.strokeRect(x - w * 0.7, top, w * 1.4, h + 9);
-    ctx.fillStyle = '#69e7b1';
+    ctx.fillStyle = light ? '#126b42' : '#69e7b1';
     ctx.font = '11px monospace';
     ctx.fillText(`ID ${String(person.id).padStart(3, '0')} · ${(0.91 + Math.sin(now / 500 + person.id) * 0.05).toFixed(2)}`, x - w * 0.7, top - 6);
   }
 }
 function drawFeed(now) {
   const w = feed.width; const h = feed.height;
-  ctx.fillStyle = '#1d2421'; ctx.fillRect(0, 0, w, h);
+  const light = state.theme === 'light';
+  ctx.fillStyle = light ? '#d8dfda' : '#1d2421'; ctx.fillRect(0, 0, w, h);
   const horizon = h * 0.39;
   const gradient = ctx.createLinearGradient(0, 0, 0, horizon);
-  gradient.addColorStop(0, '#303a35'); gradient.addColorStop(1, '#545b54');
+  gradient.addColorStop(0, light ? '#eaf0ec' : '#303a35'); gradient.addColorStop(1, light ? '#cbd5ce' : '#545b54');
   ctx.fillStyle = gradient; ctx.fillRect(0, 0, w, horizon);
-  ctx.fillStyle = '#383d37'; ctx.fillRect(0, horizon, w, h - horizon);
+  ctx.fillStyle = light ? '#b9c4bc' : '#383d37'; ctx.fillRect(0, horizon, w, h - horizon);
   // Low-contrast street perspective and a simulated virtual counting line.
-  ctx.strokeStyle = '#62685f'; ctx.lineWidth = 2;
+  ctx.strokeStyle = light ? '#87958b' : '#62685f'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(w * 0.5, horizon); ctx.lineTo(0, h); ctx.moveTo(w * 0.5, horizon); ctx.lineTo(w, h); ctx.stroke();
-  ctx.setLineDash([9, 8]); ctx.strokeStyle = '#dbb664'; ctx.lineWidth = 2;
+  ctx.setLineDash([9, 8]); ctx.strokeStyle = light ? '#9b6b1b' : '#dbb664'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(w * 0.16, h * 0.77); ctx.lineTo(w * 0.87, h * 0.77); ctx.stroke(); ctx.setLineDash([]);
-  for (let i = 0; i < 6; i += 1) { const px = (i * 117 + 33) % w; ctx.fillStyle = '#60665d'; ctx.fillRect(px, horizon + 8, 4, 50 + (i % 3) * 18); }
+  for (let i = 0; i < 6; i += 1) { const px = (i * 117 + 33) % w; ctx.fillStyle = light ? '#929e95' : '#60665d'; ctx.fillRect(px, horizon + 8, 4, 50 + (i % 3) * 18); }
   if (state.track === 'colibry' && state.running) {
     const maxPeople = 1 + Math.floor(state.config.sceneLoad * 7);
     if (now - state.lastSpawn > Math.max(450, 2300 - state.config.sceneLoad * 1200) && state.people.length < maxPeople) { spawnPerson(now); state.lastSpawn = now; }
@@ -731,7 +734,7 @@ function drawFeed(now) {
     // Alternate challenge tracks use a generic compute-flow visualization, not fake wildlife or space detections.
     const pulse = state.running ? (now / 1000) % 1 : (state.frame % 90) / 90;
     const nodes = [[0.2, 0.48], [0.42, 0.35], [0.62, 0.52], [0.82, 0.4]];
-    ctx.strokeStyle = '#59685f'; ctx.lineWidth = 3;
+    ctx.strokeStyle = light ? '#78887e' : '#59685f'; ctx.lineWidth = 3;
     ctx.beginPath();
     nodes.forEach(([nx, ny], index) => {
       const x = nx * w; const y = ny * h;
@@ -741,23 +744,24 @@ function drawFeed(now) {
     nodes.forEach(([nx, ny], index) => {
       const x = nx * w; const y = ny * h;
       const active = Math.abs(pulse - index / (nodes.length - 1)) < 0.15;
-      ctx.fillStyle = active ? '#70e7b2' : '#69746d';
+      ctx.fillStyle = active ? (light ? '#22804e' : '#70e7b2') : (light ? '#a4b0a8' : '#69746d');
       ctx.beginPath(); ctx.arc(x, y, active ? 13 : 9, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#b4c0b8'; ctx.font = '12px monospace';
+      ctx.fillStyle = light ? '#3e4b42' : '#b4c0b8'; ctx.font = '12px monospace';
       ctx.fillText(state.track === 'alif' ? ['CAMERA', 'DETECT', 'CLASSIFY', 'LCD'][index] : ['FRAME', 'TILE', 'INFER', 'STORE'][index], x - 31, y + 35);
     });
     if (state.running) state.frame += 1;
   }
   // Grayscale camera grain and scanline overlay.
-  ctx.fillStyle = 'rgba(212,220,211,.035)';
+  ctx.fillStyle = light ? 'rgba(255,255,255,.08)' : 'rgba(212,220,211,.035)';
   for (let y = 0; y < h; y += 4) ctx.fillRect(0, y, w, 1);
-  ctx.fillStyle = 'rgba(8,12,10,.12)'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = light ? 'rgba(255,255,255,.025)' : 'rgba(8,12,10,.12)'; ctx.fillRect(0, 0, w, h);
   $('#frame-counter').textContent = `${t('frame-counter-prefix')} ${String(state.frame).padStart(4, '0')}`;
   requestAnimationFrame(drawFeed);
 }
 
 translateUI();
 readControls();
+boardScene.setTheme(state.theme);
 boardScene.setActivity(true);
 drawFeed(0);
 addLog('Virtual test bench initialized. All performance values are model estimates.', 'success');

@@ -75,8 +75,16 @@
 :root[data-theme="light"] .text-button{color:#53635a}
 :root[data-theme="light"] .schematic-tag{color:#84601b}
 :root[data-theme="light"] .feed-status{color:#176a40}
-:root[data-theme="light"] .board-stage,:root[data-theme="light"] .viewer-canvas-wrap{background:radial-gradient(ellipse at 50% 44%,#27332d 0,transparent 57%),#111715}
-:root[data-theme="light"] .board-hint{color:#c1cec6}
+:root[data-theme="light"] .board-stage,:root[data-theme="light"] .viewer-canvas-wrap{background:radial-gradient(ellipse at 50% 44%,#fff 0,transparent 60%),#e8eeea}
+:root[data-theme="light"] .feed-wrap{background:#e5ebe7}
+:root[data-theme="light"] .feed-overlay{color:#34463a}
+:root[data-theme="light"] .count-pill{background:#fffffff0;border-color:#8ab59a}
+:root[data-theme="light"] .count-pill small{color:#52645a}
+:root[data-theme="light"] .count-pill strong{color:#157a48}
+:root[data-theme="light"] .detect-tag{background:#fffffff0;border-color:#8ab59a;color:#225a3a}
+:root[data-theme="light"] .detect-tag span{background:#168553;box-shadow:0 0 6px #16855366}
+:root[data-theme="light"] .feed-footer{color:#53635a}
+:root[data-theme="light"] .board-hint{color:#33443a}
 :root[data-theme="light"] .viewer-hint,:root[data-theme="light"] .viewer-selection{background:#111a16e8;color:#c7d9ce}
 :root[data-theme="light"] .viewer-selection{color:#8ae0ac}
 .theme-button{border:1px solid #34433e;background:#111a1c;color:#b7c7bf;padding:9px 11px;font:9px var(--mono);letter-spacing:.05em;white-space:nowrap}

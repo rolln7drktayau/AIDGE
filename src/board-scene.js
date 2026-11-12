@@ -14,7 +14,7 @@ export function createBoardScene(canvas, onComponent) {
 
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' }); }
-  catch { return { setTrack() {}, setActivity() {}, setExplode() {}, setSide() {}, setProbeVisible() {}, setPartDetached() { return false; }, isPartDetached() { return false; }, setSelectedPart() {}, dispose() {} }; }
+  catch { return { setTrack() {}, setActivity() {}, setTheme() {}, setExplode() {}, setSide() {}, setProbeVisible() {}, setPartDetached() { return false; }, isPartDetached() { return false; }, setSelectedPart() {}, dispose() {} }; }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -36,6 +36,17 @@ export function createBoardScene(canvas, onComponent) {
   const fill = new THREE.DirectionalLight(0xc0d4c7, 0.75); fill.position.set(-6, 3, -5); scene.add(fill);
   const rim = new THREE.PointLight(0x9bceb1, 12, 22); rim.position.set(1, 5, -5); scene.add(rim);
   const grid = new THREE.GridHelper(32, 64, 0x445049, 0x28332d); grid.position.y = -1.25; grid.material.transparent = true; grid.material.opacity = 0.16; scene.add(grid);
+  function setTheme(theme) {
+    const light = theme === 'light';
+    const background = light ? 0xe8eeea : 0x0b1011;
+    scene.background.setHex(background);
+    scene.fog.color.setHex(background);
+    const gridMaterials = Array.isArray(grid.material) ? grid.material : [grid.material];
+    gridMaterials.forEach((material, index) => {
+      material.color.setHex(light ? (index === 0 ? 0xc0ccc4 : 0xd7dfda) : (index === 0 ? 0x445049 : 0x28332d));
+      material.opacity = light ? 0.48 : 0.16;
+    });
+  }
 
   const board = new THREE.Group(); scene.add(board);
   const staticParts = new THREE.Group(); board.add(staticParts);
@@ -446,5 +457,5 @@ export function createBoardScene(canvas, onComponent) {
     setSelectedPart(name);
   }
 
-  return { setTrack, setActivity(value) { active = Boolean(value); }, setExplode, setSide, setProbeVisible, setPartDetached, isPartDetached, setSelectedPart: selectPart, resetView, dispose() { observer.disconnect(); controls.dispose(); selectionHelper.geometry.dispose(); selectionHelper.material.dispose(); renderer.dispose(); } };
+  return { setTrack, setActivity(value) { active = Boolean(value); }, setTheme, setExplode, setSide, setProbeVisible, setPartDetached, isPartDetached, setSelectedPart: selectPart, resetView, dispose() { observer.disconnect(); controls.dispose(); selectionHelper.geometry.dispose(); selectionHelper.material.dispose(); renderer.dispose(); } };
 }
