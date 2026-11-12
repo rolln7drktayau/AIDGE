@@ -2,13 +2,16 @@ import './styles.css';
 import { createBoardScene } from './board-scene.js';
 import { estimatePipeline, getGoalStatus, parseTelemetryLine, LIMITS } from './simulation.js';
 
+const storedTheme = (() => { try { return localStorage.getItem('aidge-theme') === 'light' ? 'light' : 'dark'; } catch { return 'dark'; } })();
+document.documentElement.dataset.theme = storedTheme;
+
 const app = document.querySelector('#app');
 app.innerHTML = `
   <div class="shell">
     <header class="topbar">
       <a class="brand" href="#" aria-label="AIDGE Hardware Lab home"><span class="brand-mark">A</span><span>AIDGE <b>HARDWARE LAB</b></span></a>
       <div class="top-meta"><span class="live-dot"></span><span id="connection-label">VIRTUAL BENCH · LIVE ESTIMATES</span><span class="divider"></span><span>CHALLENGE 2026</span></div>
-      <div class="top-actions"><button class="lang-button" id="language-button">FRANÇAIS</button><button class="help-button" id="help-button">USER GUIDE ↗</button></div>
+      <div class="top-actions"><button class="theme-button" id="theme-button" type="button" aria-pressed="false">LIGHT THEME</button><button class="lang-button" id="language-button">FRANÇAIS</button><button class="help-button" id="help-button">USER GUIDE ↗</button></div>
     </header>
 
     <main>
@@ -78,7 +81,7 @@ app.innerHTML = `
 `;
 
 const $ = (selector) => document.querySelector(selector);
-const state = { lang: 'en', track: 'colibry', running: true, selectedPartId: null, selectedPartDetached: false, config: { width: 160, height: 120, modelKB: 360, confidence: 0.58, sceneLoad: 0.35 }, metrics: null, hardwareMetrics: null, hardware: false, serialPort: null, reader: null, bleDevice: null, bleServer: null, bleCharacteristic: null, testTimer: null, testStartedAt: 0, people: [], crossed: 0, frame: 0, lastSpawn: 0 };
+const state = { lang: 'en', theme: storedTheme, track: 'colibry', running: true, selectedPartId: null, selectedPartDetached: false, config: { width: 160, height: 120, modelKB: 360, confidence: 0.58, sceneLoad: 0.35 }, metrics: null, hardwareMetrics: null, hardware: false, serialPort: null, reader: null, bleDevice: null, bleServer: null, bleCharacteristic: null, testTimer: null, testStartedAt: 0, people: [], crossed: 0, frame: 0, lastSpawn: 0 };
 
 const components = {
   colibry: ['QVA image sensor', 'ColibryNPU / RISC-V + NNPA', '32-bit RISC-V CPU (integrated in ColibryNPU)', 'nRF52832 BLE', 'Digital microphone', '3-axis accelerometer', '8 Mbit external flash', 'CR927 battery', 'FPC camera connector', 'JTAG / GPIO / SPI / I2C'],
@@ -114,6 +117,12 @@ const t = (key) => COPY[state.lang][key] ?? COPY.en[key] ?? key;
 
 function translateUI() {
   document.documentElement.lang = state.lang;
+  const themeLabel = state.theme === 'dark'
+    ? (state.lang === 'en' ? 'LIGHT THEME' : 'THÈME CLAIR')
+    : (state.lang === 'en' ? 'DARK THEME' : 'THÈME SOMBRE');
+  $('#theme-button').textContent = themeLabel;
+  $('#theme-button').setAttribute('aria-label', themeLabel);
+  $('#theme-button').setAttribute('aria-pressed', String(state.theme === 'light'));
   $('#language-button').textContent = state.lang === 'en' ? 'FRANÇAIS' : 'ENGLISH';
   $('#help-button').textContent = t('guide-button');
   $('#connect-ble-button').textContent = t('ble-connect-button');
@@ -276,6 +285,12 @@ $('#language-button').addEventListener('click', () => {
   state.lang = state.lang === 'en' ? 'fr' : 'en';
   translateUI();
   addLog(state.lang === 'en' ? 'Interface language set to English.' : 'Langue de l’interface : français.', 'info');
+});
+$('#theme-button').addEventListener('click', () => {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = state.theme;
+  try { localStorage.setItem('aidge-theme', state.theme); } catch {}
+  translateUI();
 });
 $('#help-button').addEventListener('click', () => $('#help-dialog').showModal());
 function updateMetrics() {

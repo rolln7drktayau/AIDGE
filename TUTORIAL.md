@@ -6,6 +6,8 @@
 
 On Windows, double-click `Start_AIDGE_Lab.cmd`. Alternatively, run `npm install` and `npm run dev`, then open the local URL in Chrome or Edge. The hardware connections require localhost or HTTPS.
 
+Use **Light Theme** in the header to switch to the white interface. The choice is saved in this browser and restored on the next visit.
+
 ### Inspect the 3D hardware
 
 - Drag on the board to orbit; use the wheel or trackpad to zoom; click a component to read its description.
@@ -35,6 +37,8 @@ Fields are optional and are validated individually. Accuracy must be a fraction 
 ### Démarrer
 
 Sous Windows, double-cliquez sur `Start_AIDGE_Lab.cmd`. Sinon, lancez `npm install` puis `npm run dev` et ouvrez l’adresse locale dans Chrome ou Edge. Les connexions matérielles exigent localhost ou HTTPS.
+
+Choisissez **Thème clair** dans l’en-tête pour passer à l’interface blanche. Le choix est mémorisé dans ce navigateur et restauré à la prochaine visite.
 
 ### Inspecter le matériel en 3D
 

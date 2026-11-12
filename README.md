@@ -1,6 +1,6 @@
 # AIDGE Hardware Lab
 
-An English/French browser workbench for exploring AIDGE Challenge hardware, visualizing an illustrative 3D board, exercising a synthetic camera-to-count pipeline, and reviewing live planning estimates. The primary profile is the ASYGN Smart Video Sensor / ColibryNPU track. Wildlife Monitoring (Alif Ensemble E7) and Aidge in Space (CPU/FPGA concept) are also represented as separate hardware profiles. Use the EN/FR toggle in the header.
+An English/French browser workbench for exploring AIDGE Challenge hardware, visualizing an illustrative 3D board, exercising a synthetic camera-to-count pipeline, and reviewing live planning estimates. The primary profile is the ASYGN Smart Video Sensor / ColibryNPU track. Wildlife Monitoring (Alif Ensemble E7) and Aidge in Space (CPU/FPGA concept) are also represented as separate hardware profiles. Use the EN/FR toggle and the saved Light Theme option in the header.
 
 ## Start the simulator
 
